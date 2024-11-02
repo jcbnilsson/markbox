@@ -45,13 +45,16 @@ Markdown document and it can be at any point.
 - `@markbox.favicon = "myFaviconHere";`
 - `@markbox.date = "myDateHere";`
 - `@markbox.license = "myLicenseHere";`
+- `@markbox.tags = "tag1,tag2,tag3";`
 - `@markbox.displayTitle = "true";`
 - `@markbox.displayDate = "true";`
 - `@markbox.displaySource = "true";`
 - `@markbox.displayLicense = "true";`
 - `@markbox.displayAuthors = "true"`
 - `@markbox.enableComments = "true";`
+- `@markbox.author = "author1,author2,author3";`
 - `@markbox.addAuthor = "one author here";`
+- `@markbox.addSummary = "/mypage";`
 - `@markbox.markAsFeed = "false";`
 - `@markbox.includePage = "/blog/my-awesome-blog-post";`
 - `@markbox.redirectTo = "/blog/rss.xml";`

@@ -13,6 +13,7 @@ class parsedMarkdown {
     public $date = '';
     public $data = '';
     public $authors = array();
+    public $tags = array();
     public $allowComments = false;
     public $displayTitle = false;
     public $displayDate = false;
@@ -229,7 +230,8 @@ function convertMarkdownToHTML($contents) {
         '/.*@markbox\.favicon.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.license.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.date.*=.*&quot;(.*)(&quot;);/',
-        '/.*@markbox\.addAuthor.*=.*&quot;(.*)(&quot;);/',
+        '/.*@markbox\.author.*=.*&quot;(.*)(&quot;);/',
+        '/.*@markbox\.tags.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.allowComments.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.displayTitle.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.displayDate.*=.*&quot;(.*)(&quot;);/',
@@ -237,6 +239,8 @@ function convertMarkdownToHTML($contents) {
         '/.*@markbox\.displayAuthors.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.displayLicense.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.markAsFeed.*=.*&quot;(.*)(&quot;);/',
+        '/.*@markbox\.addAuthor.*=.*&quot;(.*)(&quot;);/',
+        '/.*@markbox\.addSummary.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.includePage.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.redirectTo.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.alias.*=.*&quot;(.*)(&quot;);/',
@@ -387,14 +391,116 @@ function convertMarkdownToHTML($contents) {
                         $out = str_replace_first($matches[0], '', $out);
 
                         break;
+                    case '/.*@markbox\.author.*=.*&quot;(.*)(&quot;);/':
+                        $ret->authors[] = explode(',', $matches[1]);
+
+                        if (count($ret->authors) == 1) {
+                            $ret->authors = $ret->authors[0];
+                        }
+
+                        $out = str_replace($matches[0], '', $out);
+
+                        break;
+                    case '/.*@markbox\.tags.*=.*&quot;(.*)(&quot;);/':
+                        $ret->tags[] = explode(',', $matches[1]);
+
+                        if (count($ret->tags) == 1) {
+                            $ret->tags = $ret->tags[0];
+                        }
+
+                        $out = str_replace($matches[0], '', $out);
+
+                        break;
                     case '/.*@markbox\.addAuthor.*=.*&quot;(.*)(&quot;);/':
                         $ret->authors[] = $matches[1];
                         $out = str_replace_first($matches[0], '', $out);
 
                         break;
+
                     case '/.*@markbox\.includePage.*=.*&quot;(.*)(&quot;);/':
                         $ret->pages[] = $matches[1];
                         $out = str_replace_first($matches[0], '', $out);
+
+                        break;
+                    case '/.*@markbox\.addSummary.*=.*&quot;(.*)(&quot;);/':
+                        $page = $matches[1];
+
+                        $Database = createTables($sqlDB);
+                        $DatabaseQuery = $Database->query('SELECT * FROM pages');
+
+                        while ($line = $DatabaseQuery->fetchArray()) {
+                            if ($line['endpoint'] != $page) {
+                                continue;
+                            }
+
+                            $converted = convertMarkdownToHTML(file_get_contents($line['file']));
+                            $title = $converted->title;
+                            $description = $converted->description;
+                            $author_a = $converted->authors;
+                            $authors = "";
+
+                            foreach ($author_a as $i => $it) {
+                                $authors .= $it;
+
+                                if (count($author_a) != $i + 1) {
+                                    $authors .= ", ";
+                                }
+                            }
+
+                            $tags_a = $converted->tags;
+                            $tags = "";
+
+                            foreach ($tags_a as $i => $it) {
+                                $tags .= $it;
+
+                                if (count($tags_a) != $i + 1) {
+                                    $tags .= ", ";
+                                }
+                            }
+
+                            $date = $converted->date;
+                            $license = $converted->license;
+
+                            $text = "<div class=\"summary\" id=\"summary" . $line['id'] . "\" style=\"cursor: pointer;\" onclick=\"location.href='" . $line['endpoint'] . "';\">\n";
+
+                            if ($title != "") {
+                                $text .= "\t<h2 id=\"summarytitle" . $line['id'] . "\">$title</h2>\n";
+                            } else {
+                                $text .= "\t<h2 id=\"summarytitle" . $line['id'] . "\">" . $line['endpoint'] . "</h2>\n";
+                            }
+
+                            for ($i = 0; $i < 4; $i++) {
+                                $sep = " • ";
+
+                                if ($i == 0 && $authors != "") {
+                                    $text .= "\t<small id=\"summaryauthor" . $line['id'] . "\">by $authors$sep</small>\n";
+                                    continue;
+                                } else if ($i == 1 && $date != "") {
+                                    $text .= "\t<small id=\"summarydate" . $line['id'] . "\">$date";
+                                    $sep = "";
+                                } else if ($i == 2 && $tags != "") {
+                                    $text .= "$sep</small>\n";
+                                    $text .= "\t<small id=\"summarytags" . $line['id'] . "\">$tags";
+                                    $sep = "";
+                                } else if ($i == 3 && $license != "") {
+                                    $text .= "$sep</small>\n";
+                                    $text .= "\t<small id=\"summarylicense" . $line['id'] . "\">$license";
+                                    $text .= "</small>\n";
+                                } else if ($i == 3) {
+                                    $text .= "</small>\n";
+                                }
+                            }
+
+                            if ($description != "") {
+                                $text .= "\t<p id=\"summarydescription" . $line['id'] . "\">$description</p>\n";
+                            }
+
+
+                            $text .= "</div>\n";
+                            $out = str_replace($matches[0], $text, $out);
+
+                            break;
+                        }
 
                         break;
                     case '/.*@markbox\.redirectTo.*=.*&quot;(.*)(&quot;);/':
@@ -588,6 +694,16 @@ function printHeader($html, $printpage) {
                     $endpointFound = 1;
                     $html .= "\t\t<small id='title'>$Header->data</small>\n";
                 }
+                if ($head['endpoint'] == "/_css") {
+                    $html .= "<style>\n";
+                    $html .= htmlspecialchars_decode(file_get_contents($head['file']));
+                    $html .= "</style>\n";
+                }
+                if ($head['endpoint'] == "/_js") {
+                    $html .= "<script>\n";
+                    $html .= htmlspecialchars_decode(file_get_contents($head['file']));
+                    $html .= "</script>\n";
+                }
             }
 
             if ($endpointFound == 0) {
@@ -681,11 +797,11 @@ function printHeader($html, $printpage) {
                 $html .= "\t\t\t\t$ret->data\n";
 
                 if ($ret->displaySource == "true") {
-                    $html .= "\t\t\t\t<a id=\"source\" href=\"/$sourceFile\">Source</a>\n";
+                    $html .= "\t\t\t\t<button id=\"source\" onclick=\"window.location.href='/$sourceFile'\">Source</button>\n";
                 }
 
                 if (isset($_SESSION['type'])) {
-                    $html .= "\t\t\t\t<a id=\"modify\" href=\"/edit-page.php?id=$pid\">Request changes</a>\n";
+                    $html .= "\t\t\t\t<button id=\"modify\" onclick=\"window.location.href='/edit-page.php?id=$pid'\">Request changes</button>\n";
                 }
 
                 if ($ret->displayLicense == "true" && $License != '') {

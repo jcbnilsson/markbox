@@ -1,13 +1,13 @@
 @import url("properties.css");
 
 @font-face {
-  font-family: 'Noto Sans';
-  src: URL('font.ttf') format('truetype');
+    font-family: 'Noto Sans';
+    src: url('font.ttf') format('truetype');
 }
 
 .bar_title {
     font-size: 15pt;
-    font-family: Noto Sans;
+    font-family: Noto Sans, monospace;
     font-weight: normal;
 
     background-color: #363636;
@@ -15,15 +15,15 @@
 
 .bar_menu {
     font-size: 15pt;
-    font-family: Noto Sans;
+    font-family: Noto Sans, monospace;
     font-weight: normal;
 
     background-color: #363636;
 }
 
-input, select, textarea {
+input, select, textarea, button {
     font-size: 12pt;
-    font-family: Noto Sans;
+    font-family: Noto Sans, monospace;
     font-weight: normal;
 
     border-color: #363636;
@@ -38,7 +38,7 @@ input[type=file] {
 
 input[type=file]::file-selector-button {
     font-size: 12pt;
-    font-family: Noto Sans;
+    font-family: Noto Sans, monospace;
     font-weight: normal;
 
     border-color: #363636;
@@ -69,6 +69,11 @@ input[type=file]::file-selector-button {
 
 .commentAuthorMod {
     color: #ffc0cb;
+}
+
+.summary {
+    background-color: #262626;
+    color: #f0eee4;
 }
 
 .dropdown-content a:hover {
@@ -105,7 +110,7 @@ input[type=file]::file-selector-button {
 
 .content {
     font-size: 12pt;
-    font-family: Noto Sans;
+    font-family: Noto Sans, monospace;
     font-weight: normal;
 
     color: #f0eee4;
@@ -149,7 +154,7 @@ body {
 
 footer {
     font-size: 12pt;
-    font-family: Noto Sans;
+    font-family: Noto Sans, monospace;
     font-weight: normal;
 
     color: #f0eee4;
@@ -159,7 +164,7 @@ footer {
 @media (prefers-color-scheme: light) {
     .bar_title {
         font-size: 15pt;
-        font-family: Noto Sans;
+        font-family: Noto Sans, monospace;
         font-weight: normal;
 
         background-color: #ececec;
@@ -167,15 +172,15 @@ footer {
 
     .bar_menu {
         font-size: 15pt;
-        font-family: Noto Sans;
+        font-family: Noto Sans, monospace;
         font-weight: normal;
 
         background-color: #ececec;
     }
 
-    input, select, textarea {
+    input, select, textarea, button {
         font-size: 12pt;
-        font-family: Noto Sans;
+        font-family: Noto Sans, monospace;
         font-weight: normal;
 
         border-color: #ececec;
@@ -190,7 +195,7 @@ footer {
 
     input[type=file]::file-selector-button {
         font-size: 12pt;
-        font-family: Noto Sans;
+        font-family: Noto Sans, monospace;
         font-weight: normal;
 
         border-color: #ececec;
@@ -221,6 +226,11 @@ footer {
 
     .commentAuthorMod {
         color: #ff99aa;
+    }
+
+    .summary {
+        background-color: #f2f2f2;
+        color: #222222;
     }
 
     .dropdown-content a:hover {
@@ -257,7 +267,7 @@ footer {
 
     .content {
         font-size: 12pt;
-        font-family: Noto Sans;
+        font-family: Noto Sans, monospace;
         font-weight: normal;
 
         color: #222222;
@@ -288,11 +298,11 @@ footer {
     }
 
     a {
-        color: #89bfff;
+        color: #5c5cd6;
     }
 
     a:hover {
-        color: #899fff;
+        color: #3333cc;
     }
 
     body {
@@ -301,7 +311,7 @@ footer {
 
     footer {
         font-size: 12pt;
-        font-family: Noto Sans;
+        font-family: Noto Sans, monospace;
         font-weight: normal;
 
         color: #222222;
