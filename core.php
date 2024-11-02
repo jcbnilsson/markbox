@@ -20,6 +20,7 @@ class parsedMarkdown {
     public $displayAuthors = false;
     public $displayLicense = false;
     public $redirectTo = '';
+    public $aliasPage = '';
     public $pages = array();
     public $isFeed = false;
 }
@@ -238,6 +239,7 @@ function convertMarkdownToHTML($contents) {
         '/.*@markbox\.markAsFeed.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.includePage.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.redirectTo.*=.*&quot;(.*)(&quot;);/',
+        '/.*@markbox\.alias.*=.*&quot;(.*)(&quot;);/',
         '/.*@markbox\.span.*&lt;STYLE.*,.*TEXT&gt;\(.*&quot;(.*)&quot;.*, &quot;(.*)&quot;\);/',
         '/.*@markbox\.span.*&lt;STYLE.*,.*HTML&gt;\(.*&quot;(.*)&quot;.*, &quot;(.*)&quot;\);/',
         '/.*@markbox\.inline.*&lt;HTML&gt;\(.*&quot;(.*)&quot;\);/',
@@ -400,6 +402,11 @@ function convertMarkdownToHTML($contents) {
                         $out = str_replace_first($matches[0], '', $out);
 
                         break;
+                    case '/.*@markbox\.alias.*=.*&quot;(.*)(&quot;);/':
+                        $ret->aliasPage = $matches[1];
+                        $out = str_replace_first($matches[0], '', $out);
+
+                        break;
                     case '/.*@markbox\.span.*&lt;STYLE.*,.*TEXT&gt;\(.*&quot;(.*)&quot;.*, &quot;(.*)&quot;\);/':
                         $cssCode = htmlspecialchars_decode($matches[1]);
                         $out = str_replace_first($matches[0], "<span style=\"$cssCode\">$matches[2]</span>", $out);
@@ -524,6 +531,18 @@ function printHeader($html, $printpage) {
 
             $wasFound = 1;
             $ret = convertMarkdownToHTML(file_get_contents($line['file']));
+
+            if ($ret->aliasPage != '') {
+                $alias = $ret->aliasPage;
+                $DatabaseQuery = $Database->query('SELECT * FROM pages');
+                while ($line = $DatabaseQuery->fetchArray()) {
+                    if ($line['endpoint'] == $alias) {
+                        $pid = $line['id'];
+                        $ret = convertMarkdownToHTML(file_get_contents($line['file']));
+                        break;
+                    }
+                }
+            }
 
             $title = $ret->title;
             $description = $ret->description;

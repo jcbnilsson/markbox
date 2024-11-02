@@ -55,6 +55,7 @@ Markdown document and it can be at any point.
 - `@markbox.markAsFeed = "false";`
 - `@markbox.includePage = "/blog/my-awesome-blog-post";`
 - `@markbox.redirectTo = "/blog/rss.xml";`
+- `@markbox.alias = "/about-me";
 - `@markbox.span<STYLE, TEXT>("color: #0000ff;", "thisIsRedText");`
 - `@markbox.span<STYLE, HTML>("color: #0000ff;", "<p>thisIsARedHTMLTag</p>");`
 - `@markbox.inline<HTML>("<small>myHtmlHere</small>");`
@@ -69,12 +70,16 @@ Markdown document and it can be at any point.
 - `@markbox.include<JAVASCRIPT>("/attachments/index.js");`
 - `@markbox.add_cookie("mycookie", "myvalue");`
 - `@markbox.remove_cookie("mycookie");`
+- `@markbox.add_cookie_if_not_set("mycookie", "myvalue");
 - `$$if_cookie("...", "...") $${ ... $$}`
+- `$$if_cookie_or_unset("...", "...") $${ ... $$}`
 
 There are also special markbox reserved endpoints. These are:
 
 - `/`
   - The root document.
+- `/_pre`
+  - The first page to be read, if found. Useful for setting cookies, etc.
 - `/_head`
   - The header text.
 - `/_foot`
