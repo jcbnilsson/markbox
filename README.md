@@ -1,6 +1,10 @@
 # markbox
 
-Markbox is a small CMS written in PHP that utilizes Markdown documents.
+Markbox is a small CMS written in PHP that utilizes Markdown documents. It powers, among other things,
+[my personal website](https://jacobnilsson.com).
+
+Please note that the codebase is pretty messy and awful in certain (many) places, due to the old crusty
+codebase and my inexperience when starting this project. I hope to deal with some of this later on.
 
 ## Features
 
@@ -58,7 +62,7 @@ Markdown document and it can be at any point.
 - `@markbox.markAsFeed = "false";`
 - `@markbox.includePage = "/blog/my-awesome-blog-post";`
 - `@markbox.redirectTo = "/blog/rss.xml";`
-- `@markbox.alias = "/about-me";
+- `@markbox.alias = "/about-me";`
 - `@markbox.span<STYLE, TEXT>("color: #0000ff;", "thisIsRedText");`
 - `@markbox.span<STYLE, HTML>("color: #0000ff;", "<p>thisIsARedHTMLTag</p>");`
 - `@markbox.inline<HTML>("<small>myHtmlHere</small>");`
