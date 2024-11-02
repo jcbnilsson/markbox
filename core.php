@@ -253,15 +253,53 @@ function convertMarkdownToHTML($contents) {
         '/.*@markbox\.add_cookie\(&quot;(.*)&quot;, &quot;(.*)&quot;\);/',
         '/.*@markbox\.add_cookie_if_not_set\(&quot;(.*)&quot;, &quot;(.*)&quot;\);/',
         '/.*@markbox\.remove_cookie\(&quot;(.*)&quot;\);/',
-        '/\$\$if_cookie.*?\(&quot;(.*?)&quot;.*?,.*?&quot;(.*?)&quot;.*?\).*?\$\${(.*?)\$\$}/s',
+    );
+
+    $controlStatements = array(
+        '/\$\$if_cookie\(&quot;(.*?)&quot;.*?,.*?&quot;(.*?)&quot;.*?\).*?\$\${(.*?)\$\$}/s',
+        '/\$\$if_cookie_or_unset\(&quot;(.*?)&quot;.*?,.*?&quot;(.*?)&quot;.*?\).*?\$\${(.*?)\$\$}/s',
     );
 
     $out = $parser->transform($contents);
 
     $maxIterations = 10000; // seems like a reasonable max number of iterations
     $iterations = 0;
+    while (preg_match('/.*\$.*\$.*/', $out) && $iterations <= $maxIterations) {
+        foreach ($controlStatements as $pattern) {
+            $matches = array();
 
-    while (preg_match('/(.*@markbox.*|.*\$.*\$)/', $out) && $iterations <= $maxIterations) {
+            if (preg_match($pattern, $out, $matches)) {
+                switch ($pattern) {
+                    case '/\$\$if_cookie\(&quot;(.*?)&quot;.*?,.*?&quot;(.*?)&quot;.*?\).*?\$\${(.*?)\$\$}/s':
+                        if (isset($_COOKIE[$matches[1]]) && $_COOKIE[$matches[1]] == $matches[2]) {
+                            $out = str_replace_first($matches[0], $matches[3], $out);
+                        } else {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[3], '', $out);
+                        }
+
+                        break;
+                    case '/\$\$if_cookie_or_unset\(&quot;(.*?)&quot;.*?,.*?&quot;(.*?)&quot;.*?\).*?\$\${(.*?)\$\$}/s':
+                        if (isset($_COOKIE[$matches[1]]) && $_COOKIE[$matches[1]] == $matches[2]) {
+                            $out = str_replace_first($matches[0], $matches[3], $out);
+                        } else if (!isset($_COOKIE[$matches[1]])) {
+                            $out = str_replace_first($matches[0], $matches[3], $out);
+                        } else {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[3], '', $out);
+                        }
+                    default:
+                        $out = str_replace_first($matches[0], '', $out);
+                        break;
+                }
+            }
+        }
+
+        $iterations++;
+    }
+
+    $iterations = 0;
+    while (preg_match('/.*@markbox.*/', $out) && $iterations <= $maxIterations) {
         foreach ($specialSyntax as $pattern) {
             $matches = array();
 
@@ -269,6 +307,17 @@ function convertMarkdownToHTML($contents) {
                 switch ($pattern) {
                     case '/\$\$if_cookie.*?\(&quot;(.*?)&quot;.*?,.*?&quot;(.*?)&quot;.*?\).*?\$\${(.*?)\$\$}/s':
                         if (isset($_COOKIE[$matches[1]]) && $_COOKIE[$matches[1]] == $matches[2]) {
+                            $out = str_replace_first($matches[0], $matches[3], $out);
+                        } else {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[3], '', $out);
+                        }
+
+                        break;
+                    case '/\$\$if_cookie_or_unset.*?\(&quot;(.*?)&quot;.*?,.*?&quot;(.*?)&quot;.*?\).*?\$\${(.*?)\$\$}/s':
+                        if (isset($_COOKIE[$matches[1]]) && $_COOKIE[$matches[1]] == $matches[2]) {
+                            $out = str_replace_first($matches[0], $matches[3], $out);
+                        } else if (!isset($_COOKIE[$matches[1]])) {
                             $out = str_replace_first($matches[0], $matches[3], $out);
                         } else {
                             $out = str_replace_first($matches[0], '', $out);
@@ -508,13 +557,17 @@ function printHeader($html, $printpage) {
 
             $endpointFound = 0;
             $HeaderDatabaseQuery = $Database->query('SELECT * FROM pages');
+            // TODO: Maybe this can be cleaner?
             while ($head = $HeaderDatabaseQuery->fetchArray()) {
+                if ($head['endpoint'] == "/_pre") {
+                    $preheader = convertMarkdownToHTML(file_get_contents($head['file']));
+                    $html .= "\t\t$preheader->data\n";
+                }
                 if ($head['endpoint'] == "/_head") {
                     $Header = convertMarkdownToHTML(file_get_contents($head['file']));
 
                     $endpointFound = 1;
                     $html .= "\t\t<small id='title'>$Header->data</small>\n";
-                    break;
                 }
             }
 
