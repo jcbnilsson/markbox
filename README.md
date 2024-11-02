@@ -77,7 +77,7 @@ Markdown document and it can be at any point.
 - `@markbox.include<JAVASCRIPT>("/attachments/index.js");`
 - `@markbox.add_cookie("mycookie", "myvalue");`
 - `@markbox.remove_cookie("mycookie");`
-- `@markbox.add_cookie_if_not_set("mycookie", "myvalue");
+- `@markbox.add_cookie_if_not_set("mycookie", "myvalue");`
 - `$$if_cookie("...", "...") $${ ... $$}`
 - `$$if_cookie_or_unset("...", "...") $${ ... $$}`
 
