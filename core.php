@@ -593,7 +593,7 @@ function convertMarkdownToHTML($contents) {
         $iterations++;
     }
 
-    $ret->data = $out;
+    $ret->data = htmlspecialchars_decode($out);
 
     return $ret;
 }
