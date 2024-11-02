@@ -1,0 +1,310 @@
+@import url("properties.css");
+
+@font-face {
+  font-family: 'Noto Sans';
+  src: URL('font.ttf') format('truetype');
+}
+
+.bar_title {
+    font-size: 15pt;
+    font-family: Noto Sans;
+    font-weight: normal;
+
+    background-color: #363636;
+}
+
+.bar_menu {
+    font-size: 15pt;
+    font-family: Noto Sans;
+    font-weight: normal;
+
+    background-color: #363636;
+}
+
+input, select, textarea {
+    font-size: 12pt;
+    font-family: Noto Sans;
+    font-weight: normal;
+
+    border-color: #363636;
+    background-color: #363636;
+    color: #f0eee4;
+}
+
+input[type=file] {
+    background-color: #262626;
+    color: #646464;
+}
+
+input[type=file]::file-selector-button {
+    font-size: 12pt;
+    font-family: Noto Sans;
+    font-weight: normal;
+
+    border-color: #363636;
+    background-color: #262626;
+    color: #f0eee4;
+}
+
+.actionmenu {
+    background-color: #3e3e3e;
+    color: #ffffff;
+}
+
+.actionmenu:hover, .actionmenu:focus {
+    background-color: #646464;
+}
+
+.dropdown-content {
+    background-color: #464646;
+}
+
+.dropdown-content a {
+    color: #f0eee4;
+}
+
+.commentAuthor {
+    color: #00ff51;
+}
+
+.commentAuthorMod {
+    color: #ffc0cb;
+}
+
+.dropdown-content a:hover {
+    background-color: #262626;
+}
+
+#title {
+    color: #f0eee4;
+}
+
+#administration {
+    color: #ffc0cb;
+}
+
+#edit {
+    color: #42a7f5;
+}
+
+.title {
+    color: #f0eee4;
+}
+
+.links {
+    color: #66667d;
+}
+
+.error, .adminError, .userError, .pageError {
+    color: #ff0000;
+}
+
+.pageSuccess {
+    color: #00ff51;
+}
+
+.content {
+    font-size: 12pt;
+    font-family: Noto Sans;
+    font-weight: normal;
+
+    color: #f0eee4;
+}
+
+.comment {
+    background-color: #262626;
+}
+
+#commentRemove {
+    color: #eb345b;
+}
+
+.admin_links, .page_links {
+    background-color: #363636;
+}
+
+.all_links {
+    background-color: #363636;
+}
+
+.warning, .pageWarning, .adminWarning {
+    color: #404040;
+}
+
+#sel {
+    color: #f0eee4;
+}
+
+a {
+    color: #89bfff;
+}
+
+a:hover {
+    color: #ccccff;
+}
+
+body {
+    background-color: #212121;
+}
+
+footer {
+    font-size: 12pt;
+    font-family: Noto Sans;
+    font-weight: normal;
+
+    color: #f0eee4;
+    background-color: #363636;
+}
+
+@media (prefers-color-scheme: light) {
+    .bar_title {
+        font-size: 15pt;
+        font-family: Noto Sans;
+        font-weight: normal;
+
+        background-color: #ececec;
+    }
+
+    .bar_menu {
+        font-size: 15pt;
+        font-family: Noto Sans;
+        font-weight: normal;
+
+        background-color: #ececec;
+    }
+
+    input, select, textarea {
+        font-size: 12pt;
+        font-family: Noto Sans;
+        font-weight: normal;
+
+        border-color: #ececec;
+        background-color: #ececec;
+        color: #222222;
+    }
+
+    input[type=file] {
+        background-color: #f2f2f2;
+        color: #646464;
+    }
+
+    input[type=file]::file-selector-button {
+        font-size: 12pt;
+        font-family: Noto Sans;
+        font-weight: normal;
+
+        border-color: #ececec;
+        background-color: #f2f2f2;
+        color: #222222;
+    }
+
+    .actionmenu {
+        background-color: #ececec;
+        color: #222222;
+    }
+
+    .actionmenu:hover, .actionmenu:focus {
+        background-color: #f2f2f2;
+    }
+
+    .dropdown-content {
+        background-color: #ececec;
+    }
+
+    .dropdown-content a {
+        color: #222222;
+    }
+
+    .commentAuthor {
+        color: #00ff51;
+    }
+
+    .commentAuthorMod {
+        color: #ff99aa;
+    }
+
+    .dropdown-content a:hover {
+        background-color: #f2f2f2;
+    }
+
+    #title {
+        color: #222222;
+    }
+
+    #administration {
+        color: #ff99aa;
+    }
+
+    #edit {
+        color: #42a7f5;
+    }
+
+    .title {
+        color: #222222;
+    }
+
+    .links {
+        color: #42a7f5;
+    }
+
+    .error, .adminError, .userError, .pageError {
+        color: #ff0000;
+    }
+
+    .pageSuccess {
+        color: #00ff51;
+    }
+
+    .content {
+        font-size: 12pt;
+        font-family: Noto Sans;
+        font-weight: normal;
+
+        color: #222222;
+    }
+
+    .comment {
+        background-color: #f2f2f2;
+    }
+
+    #commentRemove {
+        color: #eb345b;
+    }
+
+    .admin_links, .page_links {
+        background-color: #ececec;
+    }
+
+    .all_links {
+        background-color: #ececec;
+    }
+
+    .warning, .pageWarning, .adminWarning {
+        color: #2f2f2f;
+    }
+
+    #sel {
+        color: #222222;
+    }
+
+    a {
+        color: #89bfff;
+    }
+
+    a:hover {
+        color: #899fff;
+    }
+
+    body {
+        background-color: #fafafa;
+    }
+
+    footer {
+        font-size: 12pt;
+        font-family: Noto Sans;
+        font-weight: normal;
+
+        color: #222222;
+        background-color: #f4f4f4;
+    }
+}
