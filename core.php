@@ -24,6 +24,8 @@ class parsedMarkdown {
     public $aliasPage = '';
     public $pages = array();
     public $isFeed = false;
+    public $showLoginRequired = false;
+    public $showAdminRequired = false;
 }
 
 function str_replace_first($from, $to, $content) {
@@ -259,11 +261,19 @@ function convertMarkdownToHTML($contents) {
         '/.*@markbox\.add_cookie\(&quot;(.*)&quot;, &quot;(.*)&quot;\);/',
         '/.*@markbox\.add_cookie_if_not_set\(&quot;(.*)&quot;, &quot;(.*)&quot;\);/',
         '/.*@markbox\.remove_cookie\(&quot;(.*)&quot;\);/',
+        '/.*@markbox\.requireLogin.*=.*&quot;(.*)(&quot;);/',
+        '/.*@markbox\.requireAdmin.*=.*&quot;(.*)(&quot;);/',
     );
 
     $controlStatements = array(
         '/\$\$if_cookie\(&quot;(.*?)&quot;.*?,.*?&quot;(.*?)&quot;.*?\).*?\$\${(.*?)\$\$}/s',
         '/\$\$if_cookie_or_unset\(&quot;(.*?)&quot;.*?,.*?&quot;(.*?)&quot;.*?\).*?\$\${(.*?)\$\$}/s',
+        '/\$\$if_logged_in\(\).*?\$\${(.*?)\$\$}/s',
+        '/\$\$if_not_logged_in\(\).*?\$\${(.*?)\$\$}/s',
+        '/\$\$if_username_matches\(&quot;(.*?)&quot;\).*?\$\${(.*?)\$\$}/s',
+        '/\$\$if_username_not_matches\(&quot;(.*?)&quot;\).*?\$\${(.*?)\$\$}/s',
+        '/\$\$if_admin\(\).*?\$\${(.*?)\$\$}/s',
+        '/\$\$if_not_admin\(\).*?\$\${(.*?)\$\$}/s',
     );
 
     $out = $parser->transform($contents);
@@ -293,6 +303,167 @@ function convertMarkdownToHTML($contents) {
                         } else {
                             $out = str_replace_first($matches[0], '', $out);
                             $out = str_replace_first($matches[3], '', $out);
+                        }
+                        break;
+                    case '/\$\$if_logged_in\(\).*?\$\${(.*?)\$\$}/s':
+                        $Database = createTables($sqlDB);
+                        $DatabaseQuery = $Database->query('SELECT * FROM users');
+                        $Authorized = 0;
+
+                        if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[1], '', $out);
+                            break;
+                        }
+
+                        while ($line = $DatabaseQuery->fetchArray()) {
+                            if ($line['username'] == htmlspecialchars($_SESSION['username']) &&
+                                htmlspecialchars($_SESSION['username']) != "" && $line['password'] == htmlspecialchars($_SESSION['password'])
+                                && htmlspecialchars($_SESSION['password']) != "") {
+                                $Authorized = 1;
+                                break;
+                            }
+                        }
+
+                        if ($Authorized == 1) {
+                            $out = str_replace_first($matches[0], $matches[1], $out);
+                        } else {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[1], '', $out);
+                        }
+                        break;
+                    case '/\$\$if_not_logged_in\(\).*?\$\${(.*?)\$\$}/s':
+                        $Database = createTables($sqlDB);
+                        $DatabaseQuery = $Database->query('SELECT * FROM users');
+                        $Authorized = 0;
+
+                        if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
+                            $out = str_replace_first($matches[0], $matches[1], $out);
+                            break;
+                        }
+
+                        while ($line = $DatabaseQuery->fetchArray()) {
+                            if ($line['username'] == htmlspecialchars($_SESSION['username']) &&
+                                htmlspecialchars($_SESSION['username']) != "" && $line['password'] == htmlspecialchars($_SESSION['password'])
+                                && htmlspecialchars($_SESSION['password']) != "") {
+                                $Authorized = 1;
+                                break;
+                            }
+                        }
+
+                        if ($Authorized == 0) {
+                            $out = str_replace_first($matches[0], $matches[1], $out);
+                        } else {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[1], '', $out);
+                        }
+                        break;
+                    case '/\$\$if_username_matches\(&quot;(.*?)&quot;\).*?\$\${(.*?)\$\$}/s':
+                        $Database = createTables($sqlDB);
+                        $DatabaseQuery = $Database->query('SELECT * FROM users');
+                        $Authorized = 0;
+
+                        if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[1], '', $out);
+                            break;
+                        }
+
+                        while ($line = $DatabaseQuery->fetchArray()) {
+                            if ($line['username'] == htmlspecialchars($_SESSION['username']) &&
+                                htmlspecialchars($_SESSION['username']) != "" && $line['password'] == htmlspecialchars($_SESSION['password'])
+                                && htmlspecialchars($_SESSION['password']) != ""
+                                && $line['username'] == $matches[1]) {
+                                $Authorized = 1;
+                                break;
+                            }
+                        }
+
+                        if ($Authorized == 1) {
+                            $out = str_replace_first($matches[0], $matches[2], $out);
+                        } else {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[1], '', $out);
+                            $out = str_replace_first($matches[2], '', $out);
+                        }
+                        break;
+                    case '/\$\$if_username_not_matches\(&quot;(.*?)&quot;\).*?\$\${(.*?)\$\$}/s':
+                        $Database = createTables($sqlDB);
+                        $DatabaseQuery = $Database->query('SELECT * FROM users');
+                        $Authorized = 0;
+
+                        if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
+                            $out = str_replace_first($matches[0], $matches[1], $out);
+                            break;
+                        }
+
+                        while ($line = $DatabaseQuery->fetchArray()) {
+                            if ($line['username'] == htmlspecialchars($_SESSION['username']) &&
+                                htmlspecialchars($_SESSION['username']) != "" && $line['password'] == htmlspecialchars($_SESSION['password'])
+                                && htmlspecialchars($_SESSION['password']) != ""
+                                && $line['username'] == $matches[1]) {
+                                $Authorized = 1;
+                                break;
+                            }
+                        }
+
+                        if ($Authorized == 0) {
+                            $out = str_replace_first($matches[0], $matches[2], $out);
+                        } else {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[1], '', $out);
+                            $out = str_replace_first($matches[2], '', $out);
+                        }
+                    case '/\$\$if_admin\(\).*?\$\${(.*?)\$\$}/s':
+                        $Database = createTables($sqlDB);
+                        $DatabaseQuery = $Database->query('SELECT * FROM users');
+                        $Authorized = 0;
+
+                        if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[1], '', $out);
+                            break;
+                        }
+
+                        while ($line = $DatabaseQuery->fetchArray()) {
+                            if ($line['username'] == htmlspecialchars($_SESSION['username']) &&
+                                htmlspecialchars($_SESSION['username']) != "" && $line['password'] == htmlspecialchars($_SESSION['password'])
+                                && htmlspecialchars($_SESSION['password']) != "" && $line['usertype'] == 2) {
+                                $Authorized = 1;
+                                break;
+                            }
+                        }
+
+                        if ($Authorized == 1) {
+                            $out = str_replace_first($matches[0], $matches[1], $out);
+                        } else {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[1], '', $out);
+                        }
+                    case '/\$\$if_not_admin\(\).*?\$\${(.*?)\$\$}/s':
+                        $Database = createTables($sqlDB);
+                        $DatabaseQuery = $Database->query('SELECT * FROM users');
+                        $Authorized = 0;
+
+                        if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
+                            $out = str_replace_first($matches[0], $matches[1], $out);
+                            break;
+                        }
+
+                        while ($line = $DatabaseQuery->fetchArray()) {
+                            if ($line['username'] == htmlspecialchars($_SESSION['username']) &&
+                                htmlspecialchars($_SESSION['username']) != "" && $line['password'] == htmlspecialchars($_SESSION['password'])
+                                && htmlspecialchars($_SESSION['password']) != "" && $line['usertype'] == 2) {
+                                $Authorized = 1;
+                                break;
+                            }
+                        }
+
+                        if ($Authorized == 0) {
+                            $out = str_replace_first($matches[0], $matches[1], $out);
+                        } else {
+                            $out = str_replace_first($matches[0], '', $out);
+                            $out = str_replace_first($matches[1], '', $out);
                         }
                     default:
                         $out = str_replace_first($matches[0], '', $out);
@@ -583,6 +754,58 @@ function convertMarkdownToHTML($contents) {
                         setcookie($matches[1], '', time() - 3600, "/");
                         $out = str_replace_first($matches[0], '', $out);
                         break;
+                    case '/.*@markbox\.requireLogin.*=.*&quot;(.*)(&quot;);/':
+                        $Database = createTables($sqlDB);
+                        $DatabaseQuery = $Database->query('SELECT * FROM users');
+                        $Authorized = 0;
+
+                        if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
+                            $ret->showLoginRequired = true;
+                            $out = str_replace_first($matches[0], '', $out);
+                            break;
+                        }
+
+                        while ($line = $DatabaseQuery->fetchArray()) {
+                            if ($line['username'] == htmlspecialchars($_SESSION['username']) &&
+                                htmlspecialchars($_SESSION['username']) != "" && $line['password'] == htmlspecialchars($_SESSION['password'])
+                                && htmlspecialchars($_SESSION['password']) != "") {
+                                $Authorized = 1;
+                                break;
+                            }
+                        }
+
+                        if (!$Authorized && $matches[1] == "true") {
+                            $ret->showLoginRequired = true;
+                        }
+
+                        $out = str_replace_first($matches[0], '', $out);
+                        break;
+                    case '/.*@markbox\.requireAdmin.*=.*&quot;(.*)(&quot;);/':
+                        $Database = createTables($sqlDB);
+                        $DatabaseQuery = $Database->query('SELECT * FROM users');
+                        $Authorized = 0;
+
+                        if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
+                            $ret->showLoginRequired = true;
+                            $out = str_replace_first($matches[0], '', $out);
+                            break;
+                        }
+
+                        while ($line = $DatabaseQuery->fetchArray()) {
+                            if ($line['username'] == htmlspecialchars($_SESSION['username']) &&
+                                htmlspecialchars($_SESSION['username']) != "" && $line['password'] == htmlspecialchars($_SESSION['password'])
+                                && htmlspecialchars($_SESSION['password']) != "" && $line['usertype'] == 2) {
+                                $Authorized = 1;
+                                break;
+                            }
+                        }
+
+                        if (!$Authorized && $matches[1] == "true") {
+                            $ret->showAdminRequired = true;
+                        }
+
+                        $out = str_replace_first($matches[0], '', $out);
+                        break;
                     default:
                         $out = str_replace_first($matches[0], '', $out);
                         break;
@@ -601,9 +824,7 @@ function convertMarkdownToHTML($contents) {
 function printHeader($html, $printpage) {
     include "config.php";
 
-    $pid = -1;
     $id = -1;
-
     if (isset($_REQUEST['id'])) {
         $id = htmlspecialchars($_REQUEST['id']);
     }
@@ -625,6 +846,9 @@ function printHeader($html, $printpage) {
         $subdir = '/';
     }
 
+    $endpoint = "";
+    $pid = -1;
+
     while ($line = $DatabaseQuery->fetchArray()) {
         $endpoint = $line['endpoint'];
         if ((($endpoint == $subdir || "$endpoint/" == "$subdir") && $id == -1) || ($id != -1 && $printpage == 1)) {
@@ -635,205 +859,230 @@ function printHeader($html, $printpage) {
                 continue;
             }
 
-            $wasFound = 1;
-            $ret = convertMarkdownToHTML(file_get_contents($line['file']));
-
-            if ($ret->aliasPage != '') {
-                $alias = $ret->aliasPage;
-                $DatabaseQuery = $Database->query('SELECT * FROM pages');
-                while ($line = $DatabaseQuery->fetchArray()) {
-                    if ($line['endpoint'] == $alias) {
-                        $pid = $line['id'];
-                        $ret = convertMarkdownToHTML(file_get_contents($line['file']));
-                        break;
-                    }
-                }
-            }
-
-            $title = $ret->title;
-            $description = $ret->description;
-            $favicon = $ret->favicon;
-
-            if ($title === "") {
-                $title = $instanceName;
-            }
-
-            if ($description === "") {
-                $description = $instanceDescription;
-            }
-
-            $html .= "<!DOCTYPE html>\n";
-            $html .= "<html>\n";
-            $html .= "\t<head id=\"header\">\n";
-            $html .= "\t\t<meta name=\"description\" content=\"$description\">\n";
-            $html .= "\t\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n";
-
-            if ($favicon != "") {
-                $html .= "\t\t<link rel=\"icon\" href=\"$favicon\"/>\n";
-            } else if (file_exists($Icon)) {
-                $html .= "\t\t<link rel=\"icon\" href=\"/$Icon\" />\n";
-            }
-
-            if (file_exists($Stylesheet)) $html .= "\t\t<link type=\"text/css\" rel=\"stylesheet\" href=\"/$Stylesheet\"/>\n";
-            if (file_exists($javaScript)) $html .= "\t\t<script src=\"/$javaScript\"></script>\n";
-
-            $html .= "\t\t<title>$title</title>\n";
-            $html .= "\t\t<div id=\"bar_title\" class=\"bar_title\">\n";
-
-            $endpointFound = 0;
-            $HeaderDatabaseQuery = $Database->query('SELECT * FROM pages');
-            // TODO: Maybe this can be cleaner?
-            while ($head = $HeaderDatabaseQuery->fetchArray()) {
-                if ($head['endpoint'] == "/_pre") {
-                    $preheader = convertMarkdownToHTML(file_get_contents($head['file']));
-                    $html .= "\t\t$preheader->data\n";
-                }
-                if ($head['endpoint'] == "/_head") {
-                    $Header = convertMarkdownToHTML(file_get_contents($head['file']));
-
-                    $endpointFound = 1;
-                    $html .= "\t\t<small id='title'>$Header->data</small>\n";
-                }
-                if ($head['endpoint'] == "/_css") {
-                    $html .= "<style>\n";
-                    $html .= htmlspecialchars_decode(file_get_contents($head['file']));
-                    $html .= "</style>\n";
-                }
-                if ($head['endpoint'] == "/_js") {
-                    $html .= "<script>\n";
-                    $html .= htmlspecialchars_decode(file_get_contents($head['file']));
-                    $html .= "</script>\n";
-                }
-            }
-
-            if ($endpointFound == 0) {
-                if (file_exists($Logo)) $html .= "\t\t\t<img src=\"/$Logo\" id=\"titleLogo\" class=\"title\" width=\"$logoHeaderSize\">\n";
-
-                $html .= "\t\t\t<small id='title'><a id='title' href=\"/\">$instanceName</a></small>\n";
-            }
-
-            $html .= "\t\t</div>\n";
-            $html .= "\t\t<div id=\"bar_menu\" class=\"bar_menu\">\n";
-
-            $html .= "\t\t\t<script>\n";
-            $html .= "\t\t\t\tfunction pelem() {\n";
-            $html .= "\t\t\t\t\tdocument.getElementById(\"dropdown\").classList.toggle(\"show\");\n";
-            $html .= "\t\t\t\t}\n";
-            $html .= "\t\t\t\t\n";
-            $html .= "\t\t\t\twindow.onclick = function(event) {\n";
-            $html .= "\t\t\t\tif (!event.target.matches('.actionmenu')) {\n";
-            $html .= "\t\t\t\t\tvar dropdowns = document.getElementsByClassName(\"dropdown-content\");\n";
-            $html .= "\t\t\t\t\tvar i;\n";
-            $html .= "\t\t\t\t\tfor (i = 0; i < dropdowns.length; i++) {\n";
-            $html .= "\t\t\t\t\t\tvar openDropdown = dropdowns[i];\n";
-            $html .= "\t\t\t\t\t\tif (openDropdown.classList.contains('show')) {\n";
-            $html .= "\t\t\t\t\t\t\topenDropdown.classList.remove('show');\n";
-            $html .= "\t\t\t\t\t\t}\n";
-            $html .= "\t\t\t\t\t}\n";
-            $html .= "\t\t\t\t}\n";
-            $html .= "\t\t\t}\n";
-            $html .= "\t\t\t</script>\n";
-
-            $html .= "\t\t\t<button onclick=\"pelem()\" class=\"actionmenu\">☰</button>\n";
-            $html .= "\t\t\t<div id=\"dropdown\" class=\"dropdown-content\">\n";
-
-            $ListDatabaseQuery = $Database->query('SELECT * FROM pages');
-            while ($list = $ListDatabaseQuery->fetchArray()) {
-                if ($list['endpoint'] == "/_list") {
-                    $List = convertMarkdownToHTML(file_get_contents($list['file']));
-
-                    $html .= "\t\t\t\t$List->data\n";
-                }
-            }
-
-            if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
-                $html .= "\t\t\t\t<a id='edit' href=\"/edit.php?id=$pid\">Edit</a>\n";
-            }
-
-            if (!isset($_SESSION['type'])) {
-                if ($publicAccountCreation) {
-                    $html .= "\t\t\t\t<a id='register' href=\"/register.php\">Register</a>\n";
-                }
-
-                $html .= "\t\t\t\t<a id='login' href=\"/login.php\">Log in</a>\n";
-            } else {
-                $Username = htmlspecialchars($_SESSION['username']);
-                $html .= "\t\t\t\t<a id='username' href=\"/account.php\">$Username</a>\n";
-                $html .= "\t\t\t\t<a id='logout' href=\"/login.php?logout=true\">Log out</a>\n";
-            }
-
-            if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
-                $html .= "\t\t\t\t<a id='administration' href=\"/admin.php\">Administration</a>\n";
-            }
-
-            $html .= "\t\t\t</div>\n";
-
-            $html .= "\t\t</div>\n";
-            $html .= "\t</head>\n";
-            $html .= "\t<body>\n";
-            $html .= "\t\t<div id=\"content\" class=\"content\">\n<br><br>\n";
-
-            if ($printpage == 1) {
-                if ($ret->redirectTo != '') {
-                    $path = $ret->redirectTo;
-                    header("Location: $path");
-                    die();
-                }
-
-                $License = $ret->license;
-                $sourceFile = $line['file'];
-
-                if ($ret->isFeed == "true") {
-                    printFeed($ret, $subdir);
-                }
-
-                if ($ret->displayTitle == "true" && $ret->title != "") {
-                    $html .= "\t\t\t<h1 id=\"header\">$ret->title</h1>\n";
-                }
-                if ($ret->displayDate == "true" && $ret->date != "") {
-                    $html .= "\t\t\t\t<p id=\"date\">$ret->date</h1>\n";
-                }
-
-                $html .= "\t\t\t\t$ret->data\n";
-
-                if ($ret->displaySource == "true") {
-                    $html .= "\t\t\t\t<button id=\"source\" onclick=\"window.location.href='/$sourceFile'\">Source</button>\n";
-                }
-
-                if (isset($_SESSION['type'])) {
-                    $html .= "\t\t\t\t<button id=\"modify\" onclick=\"window.location.href='/edit-page.php?id=$pid'\">Request changes</button>\n";
-                }
-
-                if ($ret->displayLicense == "true" && $License != '') {
-                    $html .= "\t\t\t\tThis page is licensed under the $License license.";
-                }
-
-                if ($ret->displayAuthors == "true" && $ret->authors) {
-                    $html .= "\t\t\t\t<h2 id=\"authors\">Authors</h2>\n";
-
-                    $html .= "\t\t\t\t<p>";
-
-                    foreach ($ret->authors as $i => $it) {
-                        $html .= "$it";
-
-                        if (count($ret->authors) != $i + 1) {
-                            $html .= ", ";
-                        }
-                    }
-
-                    $html .= "\t\t\t\t</p>\n";
-                }
-
-                if ($ret->allowComments == "true") {
-                    $html = printCommentField($html, $line['id'], $pid);
-                }
-            }
-
             break;
-
+        } else {
+            $pid = -1;
+            $endpoint = "";
         }
     }
 
+    if (($endpoint == "" || $pid == -1) && $printpage) {
+        header("Location: /");
+    }
+
+    $wasFound = 1;
+    $ret = $printpage ? convertMarkdownToHTML(file_get_contents($line['file'])) : new parsedMarkdown();
+
+    if ($ret->aliasPage != '') {
+        $alias = $ret->aliasPage;
+        $DatabaseQuery = $Database->query('SELECT * FROM pages');
+        while ($line = $DatabaseQuery->fetchArray()) {
+            if ($line['endpoint'] == $alias) {
+                $pid = $line['id'];
+                $ret = convertMarkdownToHTML(file_get_contents($line['file']));
+                break;
+            }
+        }
+    }
+
+    $title = $ret->title;
+    $description = $ret->description;
+    $favicon = $ret->favicon;
+
+    if ($title === "") {
+        $title = $instanceName;
+    }
+
+    if ($description === "") {
+        $description = $instanceDescription;
+    }
+
+    $html .= "<!DOCTYPE html>\n";
+    $html .= "<html>\n";
+    $html .= "\t<head id=\"header\">\n";
+    $html .= "\t\t<meta name=\"description\" content=\"$description\">\n";
+    $html .= "\t\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n";
+
+    if ($favicon != "") {
+        $html .= "\t\t<link rel=\"icon\" href=\"$favicon\"/>\n";
+    } else if (file_exists($Icon)) {
+        $html .= "\t\t<link rel=\"icon\" href=\"/$Icon\" />\n";
+    }
+
+    if (file_exists($Stylesheet)) $html .= "\t\t<link type=\"text/css\" rel=\"stylesheet\" href=\"/$Stylesheet\"/>\n";
+    if (file_exists($javaScript)) $html .= "\t\t<script src=\"/$javaScript\"></script>\n";
+
+    $html .= "\t\t<title>$title</title>\n";
+    $html .= "\t\t<div id=\"bar_title\" class=\"bar_title\">\n";
+
+    $endpointFound = 0;
+    $HeaderDatabaseQuery = $Database->query('SELECT * FROM pages');
+
+    // TODO: Maybe this can be cleaner?
+    while ($head = $HeaderDatabaseQuery->fetchArray()) {
+        if ($head['endpoint'] == "/_pre") {
+            $preheader = convertMarkdownToHTML(file_get_contents($head['file']));
+            $html .= "\t\t$preheader->data\n";
+        }
+        if ($head['endpoint'] == "/_head") {
+            $Header = convertMarkdownToHTML(file_get_contents($head['file']));
+
+            $endpointFound = 1;
+            $html .= "\t\t<small id='title'>$Header->data</small>\n";
+        }
+
+        if ($head['endpoint'] == "/_css") {
+            $html .= "<style>\n";
+            $html .= htmlspecialchars_decode(file_get_contents($head['file']));
+            $html .= "</style>\n";
+        }
+        if ($head['endpoint'] == "/_js") {
+            $html .= "<script>\n";
+            $html .= htmlspecialchars_decode(file_get_contents($head['file']));
+            $html .= "</script>\n";
+        }
+    }
+
+    if ($endpointFound == 0) {
+        if (file_exists($Logo))
+            $html .= "\t\t\t<img src=\"/$Logo\" id=\"titleLogo\" class=\"title\" width=\"$logoHeaderSize\">\n";
+
+        $html .= "\t\t\t<small id='title'><a id='title' href=\"/\">$instanceName</a></small>\n";
+    }
+
+    $html .= "\t\t</div>\n";
+    $html .= "\t\t<div id=\"bar_menu\" class=\"bar_menu\">\n";
+
+    $html .= "\t\t\t<script>\n";
+    $html .= "\t\t\t\tfunction pelem() {\n";
+    $html .= "\t\t\t\t\tdocument.getElementById(\"dropdown\").classList.toggle(\"show\");\n";
+    $html .= "\t\t\t\t}\n";
+    $html .= "\t\t\t\t\n";
+    $html .= "\t\t\t\twindow.onclick = function(event) {\n";
+    $html .= "\t\t\t\tif (!event.target.matches('.actionmenu')) {\n";
+    $html .= "\t\t\t\t\tvar dropdowns = document.getElementsByClassName(\"dropdown-content\");\n";
+    $html .= "\t\t\t\t\tvar i;\n";
+    $html .= "\t\t\t\t\tfor (i = 0; i < dropdowns.length; i++) {\n";
+    $html .= "\t\t\t\t\t\tvar openDropdown = dropdowns[i];\n";
+    $html .= "\t\t\t\t\t\tif (openDropdown.classList.contains('show')) {\n";
+    $html .= "\t\t\t\t\t\t\topenDropdown.classList.remove('show');\n";
+    $html .= "\t\t\t\t\t\t}\n";
+    $html .= "\t\t\t\t\t}\n";
+    $html .= "\t\t\t\t}\n";
+    $html .= "\t\t\t}\n";
+    $html .= "\t\t\t</script>\n";
+
+    $html .= "\t\t\t<button onclick=\"pelem()\" class=\"actionmenu\">☰</button>\n";
+    $html .= "\t\t\t<div id=\"dropdown\" class=\"dropdown-content\">\n";
+
+    $ListDatabaseQuery = $Database->query('SELECT * FROM pages');
+    while ($list = $ListDatabaseQuery->fetchArray()) {
+        if ($list['endpoint'] == "/_list") {
+            $List = convertMarkdownToHTML(file_get_contents($list['file']));
+
+            $html .= "\t\t\t\t$List->data\n";
+        }
+    }
+
+    if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
+        $html .= "\t\t\t\t<a id='edit' href=\"/edit.php?id=$pid\">Edit</a>\n";
+    }
+
+    if (!isset($_SESSION['type'])) {
+        if ($publicAccountCreation) {
+            $html .= "\t\t\t\t<a id='register' href=\"/register.php\">Register</a>\n";
+        }
+
+        $html .= "\t\t\t\t<a id='login' href=\"/login.php\">Log in</a>\n";
+    } else {
+        $Username = htmlspecialchars($_SESSION['username']);
+        $html .= "\t\t\t\t<a id='username' href=\"/account.php\">$Username</a>\n";
+        $html .= "\t\t\t\t<a id='logout' href=\"/login.php?logout=true\">Log out</a>\n";
+    }
+
+    if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
+        $html .= "\t\t\t\t<a id='administration' href=\"/admin.php\">Administration</a>\n";
+    }
+
+    $html .= "\t\t\t</div>\n";
+
+    $html .= "\t\t</div>\n";
+    $html .= "\t</head>\n";
+    $html .= "\t<body>\n";
+    $html .= "\t\t<div id=\"content\" class=\"content\">\n<br><br>\n";
+
+    if ($printpage == 1) {
+        if ($ret->redirectTo != '') {
+            $path = $ret->redirectTo;
+            header("Location: $path");
+            die();
+        }
+
+        if ($ret->showLoginRequired) {
+            $html .= "\t\t\t<h1 id=\"header\">You need to be logged in to view this page.</h1>\n";
+            $html .= "\t\t\t<p id=\"date\">Please log in to view this page.</p>\n";
+            $html .= "\t\t\t<button id=\"login\" onclick=\"window.location.href='/login.php'\">Log in</button>\n";
+            $html .= "\t\t\t<button id=\"register\" onclick=\"window.location.href='/register.php'\">Register</button>\n";
+            return $html;
+        }
+
+        if ($ret->showAdminRequired) {
+            $html .= "\t\t\t<h1 id=\"header\">You need to be an administrator to view this page.</h1>\n";
+            $html .= "\t\t\t<p id=\"date\">Please log in as an administrator to view this page.</p>\n";
+            $html .= "\t\t\t<button id=\"login\" onclick=\"window.location.href='/login'\">Log in</button>\n";
+            return $html;
+        }
+
+        $License = $ret->license;
+        $sourceFile = $line['file'];
+
+        if ($ret->isFeed == "true") {
+            printFeed($ret, $subdir);
+        }
+
+        if ($ret->displayTitle == "true" && $ret->title != "") {
+            $html .= "\t\t\t<h1 id=\"header\">$ret->title</h1>\n";
+        }
+        if ($ret->displayDate == "true" && $ret->date != "") {
+            $html .= "\t\t\t\t<p id=\"date\">$ret->date</h1>\n";
+        }
+
+        $html .= "\t\t\t\t$ret->data\n";
+
+        if ($ret->displaySource == "true") {
+            $html .= "\t\t\t\t<button id=\"source\" onclick=\"window.location.href='/$sourceFile'\">Source</button>\n";
+        }
+
+        if (isset($_SESSION['type'])) {
+            $html .= "\t\t\t\t<button id=\"modify\" onclick=\"window.location.href='/edit-page.php?id=$pid'\">Request changes</button>\n";
+        }
+
+        if ($ret->displayLicense == "true" && $License != '') {
+            $html .= "\t\t\t\tThis page is licensed under the $License license.";
+        }
+
+        if ($ret->displayAuthors == "true" && $ret->authors) {
+            $html .= "\t\t\t\t<h2 id=\"authors\">Authors</h2>\n";
+
+            $html .= "\t\t\t\t<p>";
+
+            foreach ($ret->authors as $i => $it) {
+                $html .= "$it";
+
+                if (count($ret->authors) != $i + 1) {
+                    $html .= ", ";
+                }
+            }
+
+            $html .= "\t\t\t\t</p>\n";
+        }
+
+        if ($ret->allowComments == "true") {
+            $html = printCommentField($html, $line['id'], $pid);
+        }
+    }
+
+    // 404
     if ($wasFound != 1) {
         $title = $instanceName;
         $description = $instanceDescription;
