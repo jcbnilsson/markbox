@@ -913,100 +913,114 @@ function printHeader($html, $printpage) {
     if (file_exists($javaScript)) $html .= "\t\t<script src=\"/$javaScript\"></script>\n";
 
     $html .= "\t\t<title>$title</title>\n";
-    $html .= "\t\t<div id=\"bar_title\" class=\"bar_title\">\n";
 
-    $endpointFound = 0;
-    $HeaderDatabaseQuery = $Database->query('SELECT * FROM pages');
-
-    // TODO: Maybe this can be cleaner?
-    while ($head = $HeaderDatabaseQuery->fetchArray()) {
-        if ($head['endpoint'] == "/_pre") {
-            $preheader = convertMarkdownToHTML(file_get_contents($head['file']));
-            $html .= "\t\t$preheader->data\n";
-        }
-        if ($head['endpoint'] == "/_head") {
-            $Header = convertMarkdownToHTML(file_get_contents($head['file']));
-
-            $endpointFound = 1;
-            $html .= "\t\t<small id='title'>$Header->data</small>\n";
-        }
-
-        if ($head['endpoint'] == "/_css") {
-            $html .= "<style>\n";
-            $html .= htmlspecialchars_decode(file_get_contents($head['file']));
-            $html .= "</style>\n";
-        }
-        if ($head['endpoint'] == "/_js") {
-            $html .= "<script>\n";
-            $html .= htmlspecialchars_decode(file_get_contents($head['file']));
-            $html .= "</script>\n";
+    $OverheaderDatabaseQuery = $Database->query('SELECT * FROM pages');
+    $foundOverrideHeader = false;
+    while ($overhead = $OverheaderDatabaseQuery->fetchArray()) {
+        if ($overhead['endpoint'] == "/_override_header") {
+            $Overhead = convertMarkdownToHTML(file_get_contents($overhead['file']));
+            $html .= "\t\t$Overhead->data\n";
+            $foundOverrideHeader = true;
         }
     }
 
-    if ($endpointFound == 0) {
-        if (file_exists($Logo))
-            $html .= "\t\t\t<img src=\"/$Logo\" id=\"titleLogo\" class=\"title\" width=\"$logoHeaderSize\">\n";
+    if (!$foundOverrideHeader) {
+        $html .= "\t\t<div id=\"bar_title\" class=\"bar_title\">\n";
 
-        $html .= "\t\t\t<small id='title'><a id='title' href=\"/\">$instanceName</a></small>\n";
-    }
+        $endpointFound = 0;
+        $HeaderDatabaseQuery = $Database->query('SELECT * FROM pages');
 
-    $html .= "\t\t</div>\n";
-    $html .= "\t\t<div id=\"bar_menu\" class=\"bar_menu\">\n";
+        // TODO: Maybe this can be cleaner?
+        while ($head = $HeaderDatabaseQuery->fetchArray()) {
+            if ($head['endpoint'] == "/_pre") {
+                $preheader = convertMarkdownToHTML(file_get_contents($head['file']));
+                $html .= "\t\t$preheader->data\n";
+            }
+            if ($head['endpoint'] == "/_head") {
+                $Header = convertMarkdownToHTML(file_get_contents($head['file']));
 
-    $html .= "\t\t\t<script>\n";
-    $html .= "\t\t\t\tfunction pelem() {\n";
-    $html .= "\t\t\t\t\tdocument.getElementById(\"dropdown\").classList.toggle(\"show\");\n";
-    $html .= "\t\t\t\t}\n";
-    $html .= "\t\t\t\t\n";
-    $html .= "\t\t\t\twindow.onclick = function(event) {\n";
-    $html .= "\t\t\t\tif (!event.target.matches('.actionmenu')) {\n";
-    $html .= "\t\t\t\t\tvar dropdowns = document.getElementsByClassName(\"dropdown-content\");\n";
-    $html .= "\t\t\t\t\tvar i;\n";
-    $html .= "\t\t\t\t\tfor (i = 0; i < dropdowns.length; i++) {\n";
-    $html .= "\t\t\t\t\t\tvar openDropdown = dropdowns[i];\n";
-    $html .= "\t\t\t\t\t\tif (openDropdown.classList.contains('show')) {\n";
-    $html .= "\t\t\t\t\t\t\topenDropdown.classList.remove('show');\n";
-    $html .= "\t\t\t\t\t\t}\n";
-    $html .= "\t\t\t\t\t}\n";
-    $html .= "\t\t\t\t}\n";
-    $html .= "\t\t\t}\n";
-    $html .= "\t\t\t</script>\n";
+                $endpointFound = 1;
+                $html .= "\t\t<small id='title'>$Header->data</small>\n";
+            }
 
-    $html .= "\t\t\t<button onclick=\"pelem()\" class=\"actionmenu\">☰</button>\n";
-    $html .= "\t\t\t<div id=\"dropdown\" class=\"dropdown-content\">\n";
-
-    $ListDatabaseQuery = $Database->query('SELECT * FROM pages');
-    while ($list = $ListDatabaseQuery->fetchArray()) {
-        if ($list['endpoint'] == "/_list") {
-            $List = convertMarkdownToHTML(file_get_contents($list['file']));
-
-            $html .= "\t\t\t\t$List->data\n";
-        }
-    }
-
-    if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
-        $html .= "\t\t\t\t<a id='edit' href=\"/edit.php?id=$pid\">Edit</a>\n";
-    }
-
-    if (!isset($_SESSION['type'])) {
-        if ($publicAccountCreation) {
-            $html .= "\t\t\t\t<a id='register' href=\"/register.php\">Register</a>\n";
+            if ($head['endpoint'] == "/_css") {
+                $html .= "<style>\n";
+                $html .= htmlspecialchars_decode(file_get_contents($head['file']));
+                $html .= "</style>\n";
+            }
+            if ($head['endpoint'] == "/_js") {
+                $html .= "<script>\n";
+                $html .= htmlspecialchars_decode(file_get_contents($head['file']));
+                $html .= "</script>\n";
+            }
         }
 
-        $html .= "\t\t\t\t<a id='login' href=\"/login.php\">Log in</a>\n";
-    } else {
-        $Username = htmlspecialchars($_SESSION['username']);
-        $html .= "\t\t\t\t<a id='username' href=\"/account.php\">$Username</a>\n";
-        $html .= "\t\t\t\t<a id='logout' href=\"/login.php?logout=true\">Log out</a>\n";
+        if ($endpointFound == 0) {
+            if (file_exists($Logo))
+                $html .= "\t\t\t<img src=\"/$Logo\" id=\"titleLogo\" class=\"title\" width=\"$logoHeaderSize\">\n";
+
+            $html .= "\t\t\t<small id='title'><a id='title' href=\"/\">$instanceName</a></small>\n";
+        }
+
+        $html .= "\t\t</div>\n";
+        $html .= "\t\t<div id=\"bar_menu\" class=\"bar_menu\">\n";
+
+        $html .= "\t\t\t<script>\n";
+        $html .= "\t\t\t\tfunction pelem() {\n";
+        $html .= "\t\t\t\t\tdocument.getElementById(\"dropdown\").classList.toggle(\"show\");\n";
+        $html .= "\t\t\t\t}\n";
+        $html .= "\t\t\t\t\n";
+        $html .= "\t\t\t\twindow.onclick = function(event) {\n";
+        $html .= "\t\t\t\tif (!event.target.matches('.actionmenu')) {\n";
+        $html .= "\t\t\t\t\tvar dropdowns = document.getElementsByClassName(\"dropdown-content\");\n";
+        $html .= "\t\t\t\t\tvar i;\n";
+        $html .= "\t\t\t\t\tfor (i = 0; i < dropdowns.length; i++) {\n";
+        $html .= "\t\t\t\t\t\tvar openDropdown = dropdowns[i];\n";
+        $html .= "\t\t\t\t\t\tif (openDropdown.classList.contains('show')) {\n";
+        $html .= "\t\t\t\t\t\t\topenDropdown.classList.remove('show');\n";
+        $html .= "\t\t\t\t\t\t}\n";
+        $html .= "\t\t\t\t\t}\n";
+        $html .= "\t\t\t\t}\n";
+        $html .= "\t\t\t}\n";
+        $html .= "\t\t\t</script>\n";
+
+        $html .= "\t\t\t<button onclick=\"pelem()\" class=\"actionmenu\">☰</button>\n";
+        $html .= "\t\t\t<div id=\"dropdown\" class=\"dropdown-content\">\n";
+
+        $ListDatabaseQuery = $Database->query('SELECT * FROM pages');
+        while ($list = $ListDatabaseQuery->fetchArray()) {
+            if ($list['endpoint'] == "/_list") {
+                $List = convertMarkdownToHTML(file_get_contents($list['file']));
+
+                $html .= "\t\t\t\t$List->data\n";
+            }
+        }
+
+        if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
+            $html .= "\t\t\t\t<a id='edit' href=\"/edit.php?id=$pid\">Edit</a>\n";
+        }
+
+        if (!isset($_SESSION['type'])) {
+            if ($publicAccountCreation) {
+                $html .= "\t\t\t\t<a id='register' href=\"/register.php\">Register</a>\n";
+            }
+
+            $html .= "\t\t\t\t<a id='login' href=\"/login.php\">Log in</a>\n";
+        } else {
+            $Username = htmlspecialchars($_SESSION['username']);
+            $html .= "\t\t\t\t<a id='username' href=\"/account.php\">$Username</a>\n";
+            $html .= "\t\t\t\t<a id='logout' href=\"/login.php?logout=true\">Log out</a>\n";
+        }
+
+        if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
+            $html .= "\t\t\t\t<a id='administration' href=\"/admin.php\">Administration</a>\n";
+        }
+
+        $html .= "\t\t\t</div>\n";
+
+        $html .= "\t\t</div>\n";
     }
 
-    if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
-        $html .= "\t\t\t\t<a id='administration' href=\"/admin.php\">Administration</a>\n";
-    }
-
-    $html .= "\t\t\t</div>\n";
-
-    $html .= "\t\t</div>\n";
     $html .= "\t</head>\n";
     $html .= "\t<body>\n";
     $html .= "\t\t<div id=\"content\" class=\"content\">\n<br><br>\n";
@@ -1098,83 +1112,97 @@ function printHeader($html, $printpage) {
         if (file_exists($javaScript)) $html .= "\t\t<script src=\"/$javaScript\"></script>\n";
 
         $html .= "\t\t<title>$title</title>\n";
-        $html .= "\t\t<div id=\"bar_title\" class=\"bar_title\">\n";
 
-        $endpointFound = 0;
-        $HeaderDatabaseQuery = $Database->query('SELECT * FROM pages');
-        while ($head = $HeaderDatabaseQuery->fetchArray()) {
-            if ($head['endpoint'] == "/_head") {
-                $Header = convertMarkdownToHTML(file_get_contents($head['file']));
-
-                $endpointFound = 1;
-                $html .= "\t\t<small id='title'>$Header->data</small>\n";
-                break;
+        $OverheaderDatabaseQuery = $Database->query('SELECT * FROM pages');
+        $foundOverrideHeader = false;
+        while ($overhead = $OverheaderDatabaseQuery->fetchArray()) {
+            if ($overhead['endpoint'] == "/_override_header") {
+                $Overhead = convertMarkdownToHtml(file_get_contents($overhead['file']));
+                $html .= "\t\t$Overhead->data\n";
+                $foundOverrideHeader = true;
             }
         }
 
-        if ($endpointFound == 0) {
-            if (file_exists($Logo)) $html .= "\t\t\t<img src=\"/$Logo\" id=\"titleLogo\" class=\"title\" width=\"$logoHeaderSize\">\n";
+        if ($foundOverrideHeader == false) {
+            $html .= "\t\t<div id=\"bar_title\" class=\"bar_title\">\n";
 
-            $html .= "\t\t\t<small id='title'><a id='title' href=\"/\">$instanceName</a></small>\n";
-        }
+            $endpointFound = 0;
+            $HeaderDatabaseQuery = $Database->query('SELECT * FROM pages');
+            while ($head = $HeaderDatabaseQuery->fetchArray()) {
+                if ($head['endpoint'] == "/_head") {
+                    $Header = convertMarkdownToHTML(file_get_contents($head['file']));
 
-        $html .= "\t\t</div>\n";
-        $html .= "\t\t<div id=\"bar_menu\" class=\"bar_menu\">\n";
-
-        $html .= "\t\t\t<script>\n";
-        $html .= "\t\t\t\tfunction pelem() {\n";
-        $html .= "\t\t\t\t\tdocument.getElementById(\"dropdown\").classList.toggle(\"show\");\n";
-        $html .= "\t\t\t\t}\n";
-        $html .= "\t\t\t\t\n";
-        $html .= "\t\t\t\twindow.onclick = function(event) {\n";
-        $html .= "\t\t\t\tif (!event.target.matches('.actionmenu')) {\n";
-        $html .= "\t\t\t\t\tvar dropdowns = document.getElementsByClassName(\"dropdown-content\");\n";
-        $html .= "\t\t\t\t\tvar i;\n";
-        $html .= "\t\t\t\t\tfor (i = 0; i < dropdowns.length; i++) {\n";
-        $html .= "\t\t\t\t\t\tvar openDropdown = dropdowns[i];\n";
-        $html .= "\t\t\t\t\t\tif (openDropdown.classList.contains('show')) {\n";
-        $html .= "\t\t\t\t\t\t\topenDropdown.classList.remove('show');\n";
-        $html .= "\t\t\t\t\t\t}\n";
-        $html .= "\t\t\t\t\t}\n";
-        $html .= "\t\t\t\t}\n";
-        $html .= "\t\t\t}\n";
-        $html .= "\t\t\t</script>\n";
-
-        $html .= "\t\t\t<button onclick=\"pelem()\" class=\"actionmenu\">☰</button>\n";
-        $html .= "\t\t\t<div id=\"dropdown\" class=\"dropdown-content\">\n";
-
-        $ListDatabaseQuery = $Database->query('SELECT * FROM pages');
-        while ($list = $ListDatabaseQuery->fetchArray()) {
-            if ($list['endpoint'] == "/_list") {
-                $List = convertMarkdownToHTML(file_get_contents($list['file']));
-
-                $html .= "\t\t\t\t$List->data\n";
-            }
-        }
-
-        if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
-            $html .= "\t\t\t\t<a id='edit' href=\"/edit.php\">Edit</a>\n";
-        }
-
-        if (!isset($_SESSION['type'])) {
-            if ($publicAccountCreation) {
-                $html .= "\t\t\t\t<a id='register' href=\"/register.php\">Register</a>\n";
+                    $endpointFound = 1;
+                    $html .= "\t\t<small id='title'>$Header->data</small>\n";
+                    break;
+                }
             }
 
-            $html .= "\t\t\t\t<a id='login' href=\"/login.php\">Log in</a>\n";
-        } else {
-            $Username = htmlspecialchars($_SESSION['username']);
-            $html .= "\t\t\t\t<a id='username' href=\"/account.php\">$Username</a>\n";
-            $html .= "\t\t\t\t<a id='logout' href=\"/login.php?logout=true\">Log out</a>\n";
+            if ($endpointFound == 0) {
+                if (file_exists($Logo)) $html .= "\t\t\t<img src=\"/$Logo\" id=\"titleLogo\" class=\"title\" width=\"$logoHeaderSize\">\n";
+
+                $html .= "\t\t\t<small id='title'><a id='title' href=\"/\">$instanceName</a></small>\n";
+            }
+
+            $html .= "\t\t</div>\n";
+            $html .= "\t\t<div id=\"bar_menu\" class=\"bar_menu\">\n";
+
+            $html .= "\t\t\t<script>\n";
+            $html .= "\t\t\t\tfunction pelem() {\n";
+            $html .= "\t\t\t\t\tdocument.getElementById(\"dropdown\").classList.toggle(\"show\");\n";
+            $html .= "\t\t\t\t}\n";
+            $html .= "\t\t\t\t\n";
+            $html .= "\t\t\t\twindow.onclick = function(event) {\n";
+            $html .= "\t\t\t\tif (!event.target.matches('.actionmenu')) {\n";
+            $html .= "\t\t\t\t\tvar dropdowns = document.getElementsByClassName(\"dropdown-content\");\n";
+            $html .= "\t\t\t\t\tvar i;\n";
+            $html .= "\t\t\t\t\tfor (i = 0; i < dropdowns.length; i++) {\n";
+            $html .= "\t\t\t\t\t\tvar openDropdown = dropdowns[i];\n";
+            $html .= "\t\t\t\t\t\tif (openDropdown.classList.contains('show')) {\n";
+            $html .= "\t\t\t\t\t\t\topenDropdown.classList.remove('show');\n";
+            $html .= "\t\t\t\t\t\t}\n";
+            $html .= "\t\t\t\t\t}\n";
+            $html .= "\t\t\t\t}\n";
+            $html .= "\t\t\t}\n";
+            $html .= "\t\t\t</script>\n";
+
+            $html .= "\t\t\t<button onclick=\"pelem()\" class=\"actionmenu\">☰</button>\n";
+            $html .= "\t\t\t<div id=\"dropdown\" class=\"dropdown-content\">\n";
+
+            $ListDatabaseQuery = $Database->query('SELECT * FROM pages');
+            while ($list = $ListDatabaseQuery->fetchArray()) {
+                if ($list['endpoint'] == "/_list") {
+                    $List = convertMarkdownToHTML(file_get_contents($list['file']));
+
+                    $html .= "\t\t\t\t$List->data\n";
+                }
+            }
+
+            if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
+                $html .= "\t\t\t\t<a id='edit' href=\"/edit.php\">Edit</a>\n";
+            }
+
+            if (!isset($_SESSION['type'])) {
+                if ($publicAccountCreation) {
+                    $html .= "\t\t\t\t<a id='register' href=\"/register.php\">Register</a>\n";
+                }
+
+                $html .= "\t\t\t\t<a id='login' href=\"/login.php\">Log in</a>\n";
+            } else {
+                $Username = htmlspecialchars($_SESSION['username']);
+                $html .= "\t\t\t\t<a id='username' href=\"/account.php\">$Username</a>\n";
+                $html .= "\t\t\t\t<a id='logout' href=\"/login.php?logout=true\">Log out</a>\n";
+            }
+
+            if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
+                $html .= "\t\t\t\t<a id='administration' href=\"/admin.php\">Administration</a>\n";
+            }
+
+            $html .= "\t\t\t</div>\n";
+
+            $html .= "\t\t</div>\n";
         }
 
-        if (isset($_SESSION['type']) && $_SESSION['type'] == 2) {
-            $html .= "\t\t\t\t<a id='administration' href=\"/admin.php\">Administration</a>\n";
-        }
-
-        $html .= "\t\t\t</div>\n";
-
-        $html .= "\t\t</div>\n";
         $html .= "\t</head>\n";
         $html .= "\t<body>\n";
         $html .= "\t\t<div id=\"content\" class=\"content\">\n";
@@ -1208,27 +1236,42 @@ function printFooter($html) {
     $html .= "\t\t</div>\n";
     $html .= "\t</body>\n";
     $html .= "\t<footer id='footer'>\n";
-    $html .= "\t\t<div class='footer'>\n";
 
     $Database = createTables($sqlDB);
-    $DatabaseQuery = $Database->query('SELECT * FROM pages');
-
-    $wasFound = 0;
-    while ($line = $DatabaseQuery->fetchArray()) {
-        $endpoint = $line['endpoint'];
-        if ($endpoint == "/_foot") {
-            $wasFound = 1;
-            $ret = convertMarkdownToHTML(file_get_contents($line['file']));
-            $html .= "\t\t\t$ret->data\n";
-            break;
+    $DatabaseOverfooterQuery = $Database->query('SELECT * FROM pages');
+    $foundOverrideFooter = false;
+    while ($overfoot = $DatabaseOverfooterQuery->fetchArray()) {
+        if ($overfoot['endpoint'] == "/_override_footer") {
+            $Overfoot = convertMarkdownToHTML(file_get_contents($overfoot['file']));
+            $html .= "\t\t$Overfoot->data\n";
+            $foundOverrideFooter = true;
         }
     }
 
-    if ($wasFound == 0) {
-        $html .= "\t\t\t<small class='footerText' id='footerText'>$footerText</p>\n";
+    if ($foundOverrideFooter == false) {
+        $html .= "\t\t<div class='footer'>\n";
+
+        $Database = createTables($sqlDB);
+        $DatabaseQuery = $Database->query('SELECT * FROM pages');
+
+        $wasFound = 0;
+        while ($line = $DatabaseQuery->fetchArray()) {
+            $endpoint = $line['endpoint'];
+            if ($endpoint == "/_foot") {
+                $wasFound = 1;
+                $ret = convertMarkdownToHTML(file_get_contents($line['file']));
+                $html .= "\t\t\t$ret->data\n";
+                break;
+            }
+        }
+
+        if ($wasFound == 0) {
+            $html .= "\t\t\t<small class='footerText' id='footerText'>$footerText</p>\n";
+        }
+
+        $html .= "\t\t</div>\n";
     }
 
-    $html .= "\t\t</div>\n";
     $html .= "\t</footer>\n";
     $html .= "</html>\n";
 
