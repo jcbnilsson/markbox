@@ -1019,6 +1019,25 @@ function printHeader($html, $printpage) {
         $html .= "\t\t\t</div>\n";
 
         $html .= "\t\t</div>\n";
+    } else {
+        $HeaderDatabaseQuery = $Database->query('SELECT * FROM pages');
+
+        while ($head = $HeaderDatabaseQuery->fetchArray()) {
+            if ($head['endpoint'] == "/_pre") {
+                $preheader = convertMarkdownToHTML(file_get_contents($head['file']));
+                $html .= "\t\t$preheader->data\n";
+            }
+            if ($head['endpoint'] == "/_css") {
+                $html .= "<style>\n";
+                $html .= htmlspecialchars_decode(file_get_contents($head['file']));
+                $html .= "</style>\n";
+            }
+            if ($head['endpoint'] == "/_js") {
+                $html .= "<script>\n";
+                $html .= htmlspecialchars_decode(file_get_contents($head['file']));
+                $html .= "</script>\n";
+            }
+        }
     }
 
     $html .= "\t</head>\n";
