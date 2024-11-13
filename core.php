@@ -331,6 +331,7 @@ function convertMarkdownToHTML($contents) {
                             $out = str_replace_first($matches[0], '', $out);
                             $out = str_replace_first($matches[1], '', $out);
                         }
+
                         break;
                     case '/\$\$if_not_logged_in\(\).*?\$\${(.*?)\$\$}/s':
                         $Database = createTables($sqlDB);
@@ -357,6 +358,7 @@ function convertMarkdownToHTML($contents) {
                             $out = str_replace_first($matches[0], '', $out);
                             $out = str_replace_first($matches[1], '', $out);
                         }
+
                         break;
                     case '/\$\$if_username_matches\(&quot;(.*?)&quot;\).*?\$\${(.*?)\$\$}/s':
                         $Database = createTables($sqlDB);
@@ -386,6 +388,7 @@ function convertMarkdownToHTML($contents) {
                             $out = str_replace_first($matches[1], '', $out);
                             $out = str_replace_first($matches[2], '', $out);
                         }
+
                         break;
                     case '/\$\$if_username_not_matches\(&quot;(.*?)&quot;\).*?\$\${(.*?)\$\$}/s':
                         $Database = createTables($sqlDB);
@@ -414,16 +417,18 @@ function convertMarkdownToHTML($contents) {
                             $out = str_replace_first($matches[1], '', $out);
                             $out = str_replace_first($matches[2], '', $out);
                         }
-                    case '/\$\$if_admin\(\).*?\$\${(.*?)\$\$}/s':
-                        $Database = createTables($sqlDB);
-                        $DatabaseQuery = $Database->query('SELECT * FROM users');
-                        $Authorized = 0;
 
+                        break;
+                    case '/\$\$if_admin\(\).*?\$\${(.*?)\$\$}/s':
                         if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
                             $out = str_replace_first($matches[0], '', $out);
                             $out = str_replace_first($matches[1], '', $out);
                             break;
                         }
+
+                        $Database = createTables($sqlDB);
+                        $DatabaseQuery = $Database->query('SELECT * FROM users');
+                        $Authorized = 0;
 
                         while ($line = $DatabaseQuery->fetchArray()) {
                             if ($line['username'] == htmlspecialchars($_SESSION['username']) &&
@@ -440,6 +445,8 @@ function convertMarkdownToHTML($contents) {
                             $out = str_replace_first($matches[0], '', $out);
                             $out = str_replace_first($matches[1], '', $out);
                         }
+
+                        break;
                     case '/\$\$if_not_admin\(\).*?\$\${(.*?)\$\$}/s':
                         $Database = createTables($sqlDB);
                         $DatabaseQuery = $Database->query('SELECT * FROM users');
@@ -465,6 +472,8 @@ function convertMarkdownToHTML($contents) {
                             $out = str_replace_first($matches[0], '', $out);
                             $out = str_replace_first($matches[1], '', $out);
                         }
+
+                        break;
                     default:
                         $out = str_replace_first($matches[0], '', $out);
                         break;
