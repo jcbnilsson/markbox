@@ -1263,7 +1263,6 @@ function printFooter($html) {
 
     $html .= "\t\t</div>\n";
     $html .= "\t</body>\n";
-    $html .= "\t<footer id='footer'>\n";
 
     $Database = createTables($sqlDB);
     $DatabaseOverfooterQuery = $Database->query('SELECT * FROM pages');
@@ -1277,6 +1276,7 @@ function printFooter($html) {
     }
 
     if ($foundOverrideFooter == false) {
+        $html .= "\t<footer id='footer'>\n";
         $html .= "\t\t<div class='footer'>\n";
 
         $Database = createTables($sqlDB);
@@ -1298,9 +1298,9 @@ function printFooter($html) {
         }
 
         $html .= "\t\t</div>\n";
+        $html .= "\t</footer>\n";
     }
 
-    $html .= "\t</footer>\n";
     $html .= "</html>\n";
 
     return "$html";
